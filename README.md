@@ -1,2 +1,12 @@
 # Miss-Punch-Tracker
 A simple web-based punch tracking system for managing and tracking daily entries efficiently.
+
+
+
+
+# 🌐 Web Preview Images
+
+![Preview Image](preview1.png)
+![Preview Image](preview2.png)
+![Preview Image](preview3.png)
+![Preview Image](preview4.png)
