@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="raise-hand.png">
+<title>Miss Punch Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: #111827;
+    --card: #1a2235;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #0088cc;
+    --success: #00e676;
+    --warn: #ffd600;
+    --danger: #ff4444;
+    --text: #e0eaff;
+    --muted: #7a90b0;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .app { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 64px;
+    background: rgba(17,24,39,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-tab {
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    color: var(--muted);
+    background: none;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--card); }
+  .nav-tab.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    box-shadow: var(--glow);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 36px 32px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  .page-title { font-size: 30px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; }
+  .page-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 32px; font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  /* FORM */
+  .form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    max-width: 680px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+  input, select, textarea {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    padding: 11px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+  }
+  select option { background: var(--panel); }
+  textarea { resize: vertical; min-height: 85px; }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; box-shadow: 0 4px 20px rgba(0,212,255,0.35); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,212,255,0.5); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warn { background: var(--warn); color: #000; }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-ghost { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 76px;
+    right: 28px;
+    background: var(--card);
+    border: 1px solid var(--success);
+    color: var(--success);
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(0,230,118,0.25);
+    z-index: 999;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+  }
+  .toast.show { transform: translateX(0); }
+
+  /* SUCCESS CARD after submit */
+  .success-card {
+    display: none;
+    background: rgba(0,230,118,0.06);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 14px;
+    padding: 28px 32px;
+    max-width: 680px;
+    margin-bottom: 24px;
+  }
+  .success-card.show { display: block; }
+  .success-card h3 { color: var(--success); font-size: 20px; margin-bottom: 10px; }
+  .tracking-id {
+    display: inline-block;
+    background: rgba(0,212,255,0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 8px;
+    letter-spacing: 2px;
+    margin: 12px 0;
+  }
+
+  /* MY REQUESTS page */
+  .track-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    max-width: 500px;
+    margin-bottom: 28px;
+  }
+  .track-box h3 { font-size: 18px; color: var(--accent); margin-bottom: 16px; letter-spacing: 1px; }
+  .track-input-row { display: flex; gap: 10px; }
+  .track-input-row input { flex: 1; }
+
+  /* Request Cards */
+  .req-cards { display: flex; flex-direction: column; gap: 14px; }
+  .req-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    transition: border-color 0.2s;
+  }
+  .req-card:hover { border-color: rgba(0,212,255,0.3); }
+  .req-card-left { flex: 1; min-width: 200px; }
+  .req-card-tid { font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+  .req-card-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .req-card-meta { font-size: 13px; color: var(--muted); }
+  .req-card-issue { font-size: 14px; color: var(--text); margin-top: 8px; opacity: 0.8; }
+  .req-card-note {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(0,212,255,0.05);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .req-card-note span { color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+
+  /* STATUS TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+  .tl-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .tl-step.done { color: var(--text); }
+  .tl-step.active-step { color: var(--accent); font-weight: 700; }
+  .tl-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .tl-step.done .tl-dot { background: var(--success); }
+  .tl-step.active-step .tl-dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* ADMIN */
+  .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 70vh; }
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 36px;
+    width: 340px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  .login-icon { font-size: 44px; margin-bottom: 14px; }
+  .login-title { font-size: 24px; font-weight: 700; color: var(--accent); letter-spacing: 2px; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .login-err { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
+
+  .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; }
+  .stat-num { font-size: 34px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .filter-bar input, .filter-bar select { max-width: 190px; padding: 8px 12px; font-size: 13px; }
+
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: rgba(0,212,255,0.07); }
+  th { padding: 13px 14px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 13px 14px; border-bottom: 1px solid rgba(30,58,95,0.35); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,212,255,0.02); }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+  .badge-pending { background: rgba(255,214,0,0.12); color: var(--warn); border: 1px solid rgba(255,214,0,0.3); }
+  .badge-resolved { background: rgba(0,230,118,0.1); color: var(--success); border: 1px solid rgba(0,230,118,0.3); }
+  .badge-review { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 480px; max-width: 94vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 80px rgba(0,0,0,0.7); }
+  .modal-title { font-size: 19px; font-weight: 700; color: var(--accent); margin-bottom: 22px; letter-spacing: 1px; }
+  .detail-row { display: flex; gap: 12px; margin-bottom: 13px; }
+  .detail-key { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; min-width: 110px; padding-top: 2px; }
+  .detail-val { font-size: 14px; color: var(--text); flex: 1; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+
+  .empty-state { text-align: center; padding: 52px 20px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 44px; margin-bottom: 10px; }
+
+  @media (max-width: 600px) {
+    nav { padding: 0 14px; }
+    .nav-logo { font-size: 16px; }
+    .page { padding: 20px 14px; }
+    .form-card, .track-box { padding: 20px 14px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .track-input-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">⏱ MISS PUNCH</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('employee')">📝 Request</button>
+      <button class="nav-tab" onclick="showPage('myreq')">📋 My Requests</button>
+      <button class="nav-tab" onclick="showPage('admin-login')">🔐 Admin</button>
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">✅ Request Submit Ho Gayi!</div>
+
+  <!-- ========== EMPLOYEE FORM PAGE ========== -->
+  <div class="page active" id="page-employee">
+    <div class="page-title">Miss Punch Request</div>
+    <div class="page-subtitle">Fill in your missed punch details below and submit.</div>
+
+    <!-- Success banner after submit -->
+    <div class="success-card" id="success-card">
+      <h3>✅ Request Successfully Submitted!</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:8px;">Please save your Tracking ID — this allows you to track your request.</p>
+      <div class="tracking-id" id="show-tracking-id">—</div>
+      <p style="font-size:13px;color:var(--muted);margin-top:12px;">Go to the "My Requests" tab, enter your Emp ID, and view all your requests.</p>
+    </div>
+
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Employee ID *</label>
+          <input type="text" id="emp-id" placeholder="Example: EMP-1042" />
+        </div>
+        <div class="form-group">
+          <label>Employee Name *</label>
+          <input type="text" id="emp-name" placeholder="Full Name" />
+        </div>
+        <div class="form-group">
+          <label>Department *</label>
+          <select id="emp-dept">
+            <option value="">— Select —</option>
+           <option value="IB">IB</option>
+            <option value="OB">OB</option>
+            <option value="RC">RC</option>
+            <option value="RCIB">RCIB</option>
+            <option value="RCOB">RCOB</option>
+            <option value="NCOB">NCOB</option>
+            <option value="NCIB">NCIB</option>
+            <option value="HR">HR</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="QA">QA</option>
+            <option value="TL">TL</option>
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="IMT">IMT</option>
+            <option value="PUTAWAY">PUTAWAY</option>
+            <option value="PLANNING">PLANNING</option>
+            <option value="MOONSINGH">MOONSINGH</option>
+            <option value="IT">IT</option>
+            <option value="PACKAGING_STORE">PACKAGING STORE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Miss Punch Date *</label>
+          <input type="date" id="emp-date" />
+        </div>
+        <div class="form-group">
+          <label>Miss Punch Type *</label>
+          <select id="emp-type">
+            <option value="">— Select —</option>
+            <option>Miss Punch</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Shift Time</label>
+          <select id="emp-shift">
+            <option value="">— Select —</option>
+            <option>Morning</option>
+            <option>General</option>
+            <option>Evening</option>
+            <option>Night</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Problem / Issue *</label>
+          <textarea id="emp-issue" placeholder="Write the reason or issue for the missed punch here..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Manager / Supervisor Name</label>
+          <input type="text" id="emp-manager" placeholder="Manager Name" />
+        </div>
+      </div>
+      <div style="margin-top:24px;">
+        <button class="btn btn-primary" onclick="submitRequest()">📨 Submit Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MY REQUESTS PAGE ========== -->
+  <div class="page" id="page-myreq">
+    <div class="page-title">My Requests</div>
+    <div class="page-subtitle">Enter your Employee ID and view the status of all your requests.</div>
+
+    <div class="track-box">
+      <h3>🔍 Find Your Requests</h3>
+      <div class="track-input-row">
+        <input type="text" id="track-empid" placeholder="Enter your Employee ID (e.g., Emp-101)" />
+        <button class="btn btn-primary" onclick="loadMyRequests()">See</button>
+      </div>
+    </div>
+
+    <div id="my-requests-area"></div>
+  </div>
+
+  <!-- ========== ADMIN LOGIN PAGE ========== -->
+  <div class="page" id="page-admin-login">
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-icon">🔐</div>
+        <div class="login-title">ADMIN LOGIN</div>
+        <div class="login-sub">Log in to the Admin Panel.</div>
+        <div class="form-group" style="text-align:left;margin-bottom:14px;">
+          <label>Username</label>
+          <input type="text" id="login-user" placeholder="admin" />
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label>Password</label>
+          <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+        </div>
+        <div class="login-err" id="login-err">❌ Incorrect Username or Password</div>
+        <button class="btn btn-primary" style="width:100%;margin-top:22px;" onclick="doLogin()">LOGIN →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN PANEL PAGE ========== -->
+  <div class="page" id="page-admin">
+    <div class="admin-header">
+      <div>
+        <div class="page-title">Admin Panel</div>
+        <div class="page-subtitle">All missed punch requests appear here.</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="adminLogout()">Logout</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--warn)" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="stat-review">0</div><div class="stat-label">In Review</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--success)" id="stat-resolved">0</div><div class="stat-label">Resolved</div></div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="filter-search" placeholder="🔍 Name / ID se search..." oninput="renderTable()" />
+      <select id="filter-status" onchange="renderTable()">
+        <option value="">All Status</option>
+        <option>Pending</option><option>In Review</option><option>Resolved</option>
+      </select>
+      <select id="filter-dept" onchange="renderTable()">
+        <option value="">All Departments</option>
+        <option value="IB">IB</option>
+        <option value="OB">OB</option>
+        <option value="RC">RC</option>
+        <option value="RCIB">RCIB</option>
+        <option value="RCOB">RCOB</option>
+        <option value="NCOB">NCOB</option>
+        <option value="NCIB">NCIB</option>
+        <option value="HR">HR</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="QA">QA</option>
+        <option value="TL">TL</option>
+        <option value="INVENTORY">INVENTORY</option>
+        <option value="IMT">IMT</option>
+        <option value="PUTAWAY">PUTAWAY</option>
+        <option value="PLANNING">PLANNING</option>
+        <option value="MOONSINGH">MOONSINGH</option>
+        <option value="IT">IT</option>
+        <option value="PACKAGING_STORE">PACKAGING STORE</option>
+      </select>
+      <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="clearRequests()">🗑 Clear All</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Track ID</th>
+            <th>Emp ID</th>
+            <th>Name</th>
+            <th>Dept</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="requests-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title">📋 Request Details</div>
+      <div id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---- DATA ----
+  let requests = JSON.parse(localStorage.getItem('misspunch_v2') || '[]');
+  let currentModal = null;
+
+  function saveRequests() {
+    localStorage.setItem('misspunch_v2', JSON.stringify(requests));
+  }
+
+  function genTrackId() {
+    const d = new Date();
+    const yy = d.getFullYear().toString().slice(-2);
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const rand = Math.floor(Math.random()*900)+100;
+    return `MP-${yy}${mm}-${rand}`;
+  }
+
+  // ---- PAGE NAV ----
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    const tabs = document.querySelectorAll('.nav-tab');
+
+    if (id === 'admin') {
+      document.getElementById('page-admin').classList.add('active');
+      tabs[2].classList.add('active');
+      updateStats(); renderTable();
+    } else if (id === 'admin-login') {
+      if (sessionStorage.getItem('admin_auth') === '1') {
+        document.getElementById('page-admin').classList.add('active');
+        updateStats(); renderTable();
+      } else {
+        document.getElementById('page-admin-login').classList.add('active');
+      }
+      tabs[2].classList.add('active');
+    } else if (id === 'myreq') {
+      document.getElementById('page-myreq').classList.add('active');
+      tabs[1].classList.add('active');
+    } else {
+      document.getElementById('page-employee').classList.add('active');
+      tabs[0].classList.add('active');
+    }
+  }
+
+  // ---- LOGIN ----
+  function doLogin() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    if (u === 'Admin' && p === 'Admin123') {
+      sessionStorage.setItem('admin_auth', '1');
+      document.getElementById('login-err').style.display = 'none';
+      showPage('admin');
+    } else {
+      document.getElementById('login-err').style.display = 'block';
+    }
+  }
+
+  function adminLogout() {
+    sessionStorage.removeItem('admin_auth');
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    showPage('employee');
+  }
+
+  // ---- SUBMIT ----
+  function submitRequest() {
+    const id = document.getElementById('emp-id').value.trim();
+    const name = document.getElementById('emp-name').value.trim();
+    const dept = document.getElementById('emp-dept').value;
+    const date = document.getElementById('emp-date').value;
+    const type = document.getElementById('emp-type').value;
+    const shift = document.getElementById('emp-shift').value;
+    const issue = document.getElementById('emp-issue').value.trim();
+    const manager = document.getElementById('emp-manager').value.trim();
+
+    if (!id || !name || !dept || !date || !type || !issue) {
+      alert('⚠️ Please fill in all * fields.');
+      return;
+    }
+
+    const trackId = genTrackId();
+    const req = {
+      uid: Date.now(),
+      trackId,
+      empId: id,
+      name,
+      dept,
+      date,
+      type,
+      shift,
+      issue,
+      manager,
+      status: 'Pending',
+      adminNote: '',
+      submitted: new Date().toLocaleString('hi-IN')
+    };
+
+    requests.unshift(req);
+    saveRequests();
+
+    // Show success card
+    document.getElementById('show-tracking-id').textContent = trackId;
+    document.getElementById('success-card').classList.add('show');
+
+    // Clear form
+    ['emp-id','emp-name','emp-date','emp-issue','emp-manager'].forEach(f => document.getElementById(f).value = '');
+    ['emp-dept','emp-type','emp-shift'].forEach(f => document.getElementById(f).selectedIndex = 0);
+
+    // Toast
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  // ---- MY REQUESTS ----
+  function loadMyRequests() {
+    const empId = document.getElementById('track-empid').value.trim().toUpperCase();
+    const area = document.getElementById('my-requests-area');
+
+    if (!empId) { area.innerHTML = '<p style="color:var(--warn)">⚠️ Please enter your Employee ID.</p>'; return; }
+
+    const myReqs = requests.filter(r => r.empId.toUpperCase() === empId);
+
+    if (myReqs.length === 0) {
+      area.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div>I haven't received any requests this Eid.: <strong style="color:var(--accent)">${empId}</strong></div></div>`;
+      return;
+    }
+
+    area.innerHTML = `
+      <div style="font-size:14px;color:var(--muted);margin-bottom:16px;">
+        <strong style="color:var(--accent)">${empId}</strong> Total <strong style="color:var(--text)">${myReqs.length}</strong> request(s) mili
+      </div>
+      <div class="req-cards">
+        ${myReqs.map(r => reqCardHTML(r)).join('')}
+      </div>
+    `;
+  }
+
+  function statusTimeline(status) {
+    const steps = ['Pending', 'In Review', 'Resolved'];
+    const idx = steps.indexOf(status);
+    return `
+      <div class="timeline">
+        ${steps.map((s, i) => {
+          let cls = '';
+          if (i < idx) cls = 'done';
+          else if (i === idx) cls = 'active-step';
+          return `<div class="tl-step ${cls}"><div class="tl-dot"></div>${s}</div>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function reqCardHTML(r) {
+    const statusColors = { 'Pending': 'var(--warn)', 'In Review': 'var(--accent)', 'Resolved': 'var(--success)' };
+    const col = statusColors[r.status] || 'var(--muted)';
+    return `
+      <div class="req-card">
+        <div class="req-card-left">
+          <div class="req-card-tid">🎫 ${r.trackId}</div>
+          <div class="req-card-title">${r.type}</div>
+          <div class="req-card-meta">📅 ${r.date} &nbsp;|&nbsp; 🏢 ${r.dept} &nbsp;|&nbsp; ⏰ ${r.shift || 'N/A'}</div>
+          <div class="req-card-issue">📝 ${r.issue}</div>
+          ${r.adminNote ? `<div class="req-card-note"><span>Admin Remark:</span>${r.adminNote}</div>` : ''}
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">Submitted: ${r.submitted}</div>
+        </div>
+        <div style="text-align:right;">
+          ${statusTimeline(r.status)}
+          <div style="margin-top:10px;font-size:13px;font-weight:700;color:${col};">● ${r.status}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- ADMIN TABLE ----
+  function renderTable() {
+    const search = document.getElementById('filter-search').value.toLowerCase();
+    const statusF = document.getElementById('filter-status').value;
+    const deptF = document.getElementById('filter-dept').value;
+
+    let filtered = requests.filter(r => {
+      const ms = !search || r.empId.toLowerCase().includes(search) || r.name.toLowerCase().includes(search) || (r.trackId||'').toLowerCase().includes(search);
+      const mst = !statusF || r.status === statusF;
+      const md = !deptF || r.dept === deptF;
+      return ms && mst && md;
+    });
+
+    const tbody = document.getElementById('requests-tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📭</div><div>Request Not Found</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((r, i) => `
+      <tr>
+        <td style="color:var(--muted);font-size:11px">${i+1}</td>
+        <td><span style="color:var(--accent);font-weight:700;font-size:12px">${r.trackId||'—'}</span></td>
+        <td><strong style="color:var(--text)">${r.empId}</strong></td>
+        <td>${r.name}</td>
+        <td style="color:var(--muted)">${r.dept}</td>
+        <td>${r.date}</td>
+        <td style="font-size:12px">${r.type}</td>
+        <td>${badgeHTML(r.status)}</td>
+        <td style="font-size:11px;color:var(--muted)">${r.submitted}</td>
+        <td><button class="btn btn-success btn-sm" onclick="openModal(${r.uid})">View / Edit</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function badgeHTML(s) {
+    const m = { 'Pending':'badge-pending','Resolved':'badge-resolved','In Review':'badge-review' };
+    return `<span class="badge ${m[s]||'badge-pending'}">${s}</span>`;
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = requests.length;
+    document.getElementById('stat-pending').textContent = requests.filter(r=>r.status==='Pending').length;
+    document.getElementById('stat-resolved').textContent = requests.filter(r=>r.status==='Resolved').length;
+    document.getElementById('stat-review').textContent = requests.filter(r=>r.status==='In Review').length;
+  }
+
+  // ---- MODAL ----
+  function openModal(uid) {
+    const r = requests.find(x=>x.uid===uid);
+    if (!r) return;
+    currentModal = uid;
+
+    document.getElementById('modal-body').innerHTML = `
+      <div class="detail-row"><div class="detail-key">Track ID</div><div class="detail-val" style="color:var(--accent);font-weight:700">${r.trackId||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Emp ID</div><div class="detail-val">${r.empId}</div></div>
+      <div class="detail-row"><div class="detail-key">Name</div><div class="detail-val">${r.name}</div></div>
+      <div class="detail-row"><div class="detail-key">Department</div><div class="detail-val">${r.dept}</div></div>
+      <div class="detail-row"><div class="detail-key">Date</div><div class="detail-val">${r.date}</div></div>
+      <div class="detail-row"><div class="detail-key">Punch Type</div><div class="detail-val">${r.type}</div></div>
+      <div class="detail-row"><div class="detail-key">Shift</div><div class="detail-val">${r.shift||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Manager</div><div class="detail-val">${r.manager||'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Issue</div><div class="detail-val">${r.issue}</div></div>
+      <div class="detail-row"><div class="detail-key">Submitted</div><div class="detail-val" style="font-size:12px;color:var(--muted)">${r.submitted}</div></div>
+      <div style="margin-top:18px;">
+        <label style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:7px">Admin Note / Remark</label>
+        <textarea id="modal-note" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Rajdhani,sans-serif;font-size:14px;padding:10px;outline:none;resize:vertical;">${r.adminNote||''}</textarea>
+      </div>
+      <div style="margin-top:14px;">
+        <label style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:7px">Status Update Karein</label>
+        <select id="modal-status" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Rajdhani,sans-serif;font-size:14px;padding:10px;outline:none;width:100%;">
+          <option ${r.status==='Pending'?'selected':''}>Pending</option>
+          <option ${r.status==='In Review'?'selected':''}>In Review</option>
+          <option ${r.status==='Resolved'?'selected':''}>Resolved</option>
+        </select>
+      </div>
+    `;
+
+    document.getElementById('modal-actions').innerHTML = `
+      <button class="btn btn-primary" onclick="saveModal()">💾 Save</button>
+      <button class="btn btn-danger" onclick="deleteRequest(${uid})">🗑 Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function saveModal() {
+    const r = requests.find(x=>x.uid===currentModal);
+    if (!r) return;
+    r.status = document.getElementById('modal-status').value;
+    r.adminNote = document.getElementById('modal-note').value;
+    saveRequests();
+    closeModal();
+    updateStats(); renderTable();
+  }
+
+  function deleteRequest(uid) {
+    if (!confirm('Do you want to delete this request?')) return;
+    requests = requests.filter(r=>r.uid!==uid);
+    saveRequests();
+    closeModal();
+    updateStats(); renderTable();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    currentModal = null;
+  }
+
+  function clearRequests() {
+    if (!confirm('All requests will be deleted. Confirm?')) return;
+    requests = [];
+    saveRequests();
+    updateStats(); renderTable();
+  }
+
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+
+  // Initial render
+  renderTable();
+</script>
+
+<!-- FOOTER -->
+<footer style="background:#0a0e1a;border-top:1px solid #1e3a5f;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:'Rajdhani',sans-serif;font-size:14px;color:#7a90b0;margin-top:40px;">
+  <div>
+    <span style="color:#00d4ff;font-weight:700;letter-spacing:1px;">⏱ MISS PUNCH TRACKER</span>
+    <span style="margin:0 10px;">|</span>
+    <span style="margin:0 8px;">•</span>
+  </div>
+  <div style="font-size:13px;">
+    Built by <span style="color:#00d4ff;font-weight:700;">Harsh Chauhan</span> &nbsp;•&nbsp; &copy; 2026 All Rights Reserved
+    <span style="color: #00d4ff;">Developer Gmail: harshchauhan.bca@gmial.com</span>
+  </div>
+</footer>
+
+</body>
+</html>
