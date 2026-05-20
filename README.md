@@ -2,6 +2,10 @@
 A simple web-based punch tracking system for managing and tracking daily entries efficiently.
 
 
+# ADMIN USER OR PASSWORD (U = Admin || P = Admin123)
+
+
+
 
 
 # 🌐 Web Preview Images
